@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { signIn, signUp } from '../lib/auth'
 import { useApp } from '../context/AppContext'
 
 export default function AuthPage() {
@@ -17,26 +18,51 @@ export default function AuthPage() {
   const [regPw, setRegPw] = useState('')
   const [regErr, setRegErr] = useState('')
 
-  function handleLogin(e) {
-    e.preventDefault()
-    const result = login(loginEmail, loginPw)
-    if (!result.ok) {
-      setLoginErr(result.error)
-    }
-  }
 
-  function handleRegister(e) {
+  async function handleLogin(e) {
     e.preventDefault()
-    const result = register({ name: regName, biz: regBiz, email: regEmail, pw: regPw })
-    if (!result.ok) {
-      setRegErr(result.error)
+
+    console.log('BUTTON CLICKED')
+
+    setLoginErr('')
+
+    const { data, error } = await signIn(
+      loginEmail,
+      loginPw
+    )
+
+    console.log('LOGIN ERROR', error)
+    console.log('LOGIN DATA', data)
+
+    if (error) {
+      setLoginErr(error.message)
       return
     }
-    showToast('Account created! Sign in to continue.')
+
+    window.location.reload()
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault()
+
+    setRegErr('')
+
+    const { error } = await signUp(
+      regEmail,
+      regPw,
+      regName
+    )
+
+    if (error) {
+      setRegErr(error.message)
+      return
+    }
+
+    showToast('Account created successfully!')
+
     setTab('login')
     setLoginEmail(regEmail)
   }
-
   return (
     <div className="auth-wrap">
       <div className="auth-card">

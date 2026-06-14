@@ -4,7 +4,10 @@ import { stockStatus, formatINR } from '../utils/helpers'
 
 export default function Dashboard() {
   const { currentUser } = useApp()
-  const { products, invoices, settings } = currentUser
+  const products = currentUser?.products || []
+
+  const invoices = currentUser?.invoices || []
+  const settings = currentUser?.settings || {}
 
   const lowStock = products.filter(p => p.stock <= 5)
   const revenue = invoices.reduce((sum, inv) => sum + inv.total, 0)
@@ -37,7 +40,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div
+        className="dashboard-grid"
+        style={{
+          display: 'grid',
+          gap: 14
+        }}
+      >
         <div className="card">
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Low stock alerts</div>
           {lowStock.length === 0 ? (

@@ -1,11 +1,20 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { getCurrentUser } from '../lib/auth'
 
-const emptyForm = { name: '', phone: '', email: '', addr1: '', addr2: '', gstin: '' }
+import {
+  getCustomers,
+  addCustomer,
+  updateCustomer,
+  deleteCustomer
+} from '../lib/customers'
+
+const emptyForm = { name: '', phone: '', email: '', address: '', gstin: '' }
 
 export default function Customers() {
   const { currentUser, updateUserData, showToast } = useApp()
-  const { customers, invoices } = currentUser
+  const customers = currentUser?.customers || []
+  const invoices = currentUser?.invoices || []
 
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -28,36 +37,86 @@ export default function Customers() {
 
   function openEdit(c) {
     setEditingId(c.id)
-    setForm({ name: c.name, phone: c.phone || '', email: c.email || '', addr1: c.addr1 || '', addr2: c.addr2 || '', gstin: c.gstin || '' })
+    setForm({
+      name: c.name,
+      phone: c.phone || '',
+      email: c.email || '',
+      address: c.address || '',
+      gstin: c.gstin || ''
+    })
     setModalOpen(true)
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault()
+
     const name = form.name.trim()
+
     if (!name) {
       alert('Enter customer name.')
       return
     }
 
-    updateUserData(user => {
-      let newCustomers
-      if (editingId) {
-        newCustomers = user.customers.map(c => c.id === editingId ? { ...c, ...form, name } : c)
-      } else {
-        const nextId = Math.max(100, ...user.customers.map(c => c.id), 99) + 1
-        newCustomers = [...user.customers, { id: nextId, ...form, name }]
-      }
-      return { ...user, customers: newCustomers }
-    })
+    try {
+      const authUser = await getCurrentUser()
 
-    showToast(editingId ? 'Customer updated!' : 'Customer added!')
-    setModalOpen(false)
+      if (editingId) {
+        const { error } = await updateCustomer(editingId, {
+          name,
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+          gstin: form.gstin
+        })
+
+        if (error) throw error
+      } else {
+        const { error } = await addCustomer({
+          user_id: authUser.id,
+          name,
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+          gstin: form.gstin
+        })
+
+        if (error) throw error
+      }
+
+      const { data } = await getCustomers(authUser.id)
+
+      updateUserData(user => ({
+        ...user,
+        customers: data || []
+      }))
+
+      showToast(editingId ? 'Customer updated!' : 'Customer added!')
+      setModalOpen(false)
+
+    } catch (error) {
+      console.error(error)
+      alert(error.message)
+    }
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!confirm('Delete this customer?')) return
-    updateUserData(user => ({ ...user, customers: user.customers.filter(c => c.id !== id) }))
+
+    const { error } = await deleteCustomer(id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const authUser = await getCurrentUser()
+    const { data } = await getCustomers(authUser.id)
+
+    updateUserData(user => ({
+      ...user,
+      customers: data || []
+    }))
+
     showToast('Deleted.')
   }
 
@@ -88,7 +147,9 @@ export default function Customers() {
                   <td style={{ fontWeight: 600 }}>{c.name}</td>
                   <td>{c.phone || '—'}</td>
                   <td>{c.email || '—'}</td>
-                  <td style={{ fontSize: 11.5, maxWidth: 160 }}>{[c.addr1, c.addr2].filter(Boolean).join(', ') || '—'}</td>
+                  <td style={{ fontSize: 11.5, maxWidth: 160 }}>
+                    {c.address || '—'}
+                  </td>
                   <td>{c.gstin || '—'}</td>
                   <td>{invoiceCount(c.id)}</td>
                   <td>
@@ -122,12 +183,11 @@ export default function Customers() {
                 <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
               </div>
               <div className="form-group">
-                <label className="form-label">Address line 1</label>
-                <input value={form.addr1} onChange={e => setForm({ ...form, addr1: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Address line 2 (city, state, PIN)</label>
-                <input value={form.addr2} onChange={e => setForm({ ...form, addr2: e.target.value })} />
+                <label className="form-label">Address</label>
+                <input
+                  value={form.address}
+                  onChange={e => setForm({ ...form, address: e.target.value })}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">GSTIN (optional)</label>

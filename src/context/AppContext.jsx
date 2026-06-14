@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-
+import { getSession } from '../lib/auth'
+import { getProducts } from '../lib/products'
 const AppContext = createContext(null)
 
 const STORAGE_KEY = 'jkhd_data'
@@ -8,11 +9,11 @@ const STORAGE_KEY = 'jkhd_data'
 const seedData = {
   'demo@jkhd.com': {
     name: 'Javed Kumar',
-    biz: 'JK Home Decor',
+    biz: 'BillVoice',
     email: 'demo@jkhd.com',
     pw: 'demo123',
     settings: {
-      bname: 'JK Home Decor',
+      bname: 'BillVoice',
       gstin: '09AABCU9603R1ZX',
       addr1: 'Shop No. 12, Decor Market, Civil Lines',
       addr2: 'Moradabad, Uttar Pradesh – 244 001',
@@ -60,6 +61,7 @@ function persistAllUsers(users) {
 export function AppProvider({ children }) {
   const [allUsers, setAllUsers] = useState(loadAllUsers)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentAuthUserId, setCurrentAuthUserId] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
 
   // Persist whenever data changes
@@ -73,8 +75,76 @@ export function AppProvider({ children }) {
     const t = setTimeout(() => setToastMsg(null), 2400)
     return () => clearTimeout(t)
   }, [toastMsg])
+  useEffect(() => {
+    async function restoreSession() {
+      const session = await getSession()
 
-  const currentUser = currentUserId ? allUsers[currentUserId] : null
+      if (!session?.user) {
+        return
+      }
+
+      const email = session.user.email?.toLowerCase()
+      const authUserId = session.user.id
+
+      if (!allUsers[email]) {
+        setAllUsers(prev => ({
+          ...prev,
+          [email]: {
+            name: session.user.user_metadata?.full_name || 'User',
+            biz: 'My Business',
+            email,
+            settings: {
+              bname: 'My Business',
+              gstin: '',
+              addr1: '',
+              addr2: '',
+              phone: '',
+              email: '',
+              pos: '',
+              cgst: '9',
+              sgst: '9',
+              prefix: 'INV',
+              sig: ''
+            },
+            products: [],
+            customers: [],
+            invoices: []
+          }
+        }))
+      }
+
+      setCurrentUserId(email)
+      setCurrentAuthUserId(authUserId)
+      await loadProductsFromSupabase(session.user)
+    }
+
+    restoreSession()
+    
+  }, [])
+
+  async function loadProductsFromSupabase(user) {
+    if (!user?.id || !user?.email) return
+
+    const { data, error } = await getProducts(user.id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setAllUsers(prev => ({
+      ...prev,
+      [user.email.toLowerCase()]: {
+        ...prev[user.email.toLowerCase()],
+        id: user.id,
+        products: data || []
+      }
+    }))
+  }
+
+  const currentUser = currentUserId
+    ? { ...allUsers[currentUserId], id: currentAuthUserId || allUsers[currentUserId]?.id }
+    : null
 
   function showToast(msg) {
     setToastMsg(msg)
@@ -112,6 +182,7 @@ export function AppProvider({ children }) {
 
   function logout() {
     setCurrentUserId(null)
+    setCurrentAuthUserId(null)
   }
 
   // Generic updater for the current user's data slice

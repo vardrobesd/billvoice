@@ -3,10 +3,20 @@ import { useApp } from '../context/AppContext'
 import { formatINR, todayDate } from '../utils/helpers'
 import { generateInvoicePDF } from '../utils/pdfGenerator'
 import InvoiceDocument from '../components/InvoiceDocument'
+import { getCurrentUser } from '../lib/auth'
+
+import {
+  addInvoice,
+  addInvoiceItems,
+  getInvoices
+} from '../lib/invoices'
 
 export default function Invoices() {
   const { currentUser, updateUserData, showToast } = useApp()
-  const { invoices, customers, products, settings } = currentUser
+  const invoices = currentUser?.invoices || []
+  const customers = currentUser?.customers || []
+  const products = currentUser?.products || []
+  const settings = currentUser?.settings || {}
 
   const [createOpen, setCreateOpen] = useState(false)
   const [viewingInvoice, setViewingInvoice] = useState(null)
@@ -28,8 +38,8 @@ export default function Invoices() {
 
   function handleCustChange(id) {
     setCustId(id)
-    const c = customers.find(x => x.id === parseInt(id, 10))
-    setCustAddr(c ? [c.addr1, c.addr2].filter(Boolean).join(', ') : '')
+    const c = customers.find(x => String(x.id) === String(id))
+    setCustAddr(c?.address || '')
   }
 
   function addItem() {
@@ -55,12 +65,12 @@ export default function Invoices() {
   const sgstAmount = taxableValue * sgstRate / 100
   const grandTotal = taxableValue + cgstAmount + sgstAmount
 
-  function handleCreateInvoice(e) {
+  async function handleCreateInvoice(e) {
     e.preventDefault()
     if (!custId) { alert('Select a customer.'); return }
     if (items.length === 0) { alert('Add at least one item.'); return }
 
-    const customer = customers.find(c => c.id === parseInt(custId, 10))
+    const customer = customers.find(c => String(c.id) === String(custId))
     const invoiceItems = items.map(it => {
       const p = products.find(x => x.id === it.pid)
       return { name: p?.name || '', price: p?.price || 0, qty: it.qty, subtotal: (p?.price || 0) * it.qty }
@@ -69,26 +79,52 @@ export default function Invoices() {
     const cg = tax * cgstRate / 100
     const sg = tax * sgstRate / 100
 
-    updateUserData(user => {
-      const nextId = Math.max(100, ...user.invoices.map(i => i.id), 99) + 1
-      const newInvoice = {
-        id: nextId,
-        custId: customer.id,
-        custName: customer.name,
-        custAddr,
-        custGstin: customer.gstin || '',
-        pos,
-        items: invoiceItems,
-        tax,
-        cr: cgstRate,
-        sr: sgstRate,
-        cg,
-        sg,
-        total: tax + cg + sg,
-        date: todayDate()
+    const authUser = await getCurrentUser()
+
+      const { data: invoiceData, error: invoiceError } = await addInvoice({
+        user_id: authUser.id,
+        customer_id: customer.id,
+        invoice_number: `INV-${Date.now()}`,
+        subtotal: tax,
+        gst_amount: cg + sg,
+        total: tax + cg + sg
+      })
+
+      if (invoiceError) {
+        console.error(invoiceError)
+        alert(invoiceError.message)
+        return
       }
-      return { ...user, invoices: [...user.invoices, newInvoice] }
-    })
+
+      const invoiceId = invoiceData[0].id
+
+      const dbItems = items.map(it => {
+        const p = products.find(x => x.id === it.pid)
+
+        return {
+          invoice_id: invoiceId,
+          product_id: p.id,
+          product_name: p.name,
+          quantity: it.qty,
+          price: p.price,
+          amount: p.price * it.qty
+        }
+      })
+
+      const { error: itemsError } = await addInvoiceItems(dbItems)
+
+      if (itemsError) {
+        console.error(itemsError)
+        alert(itemsError.message)
+        return
+      }
+
+      const { data: invoicesData } = await getInvoices(authUser.id)
+
+      updateUserData(user => ({
+        ...user,
+        invoices: invoicesData || []
+      }))
 
     showToast('Invoice created!')
     setCreateOpen(false)
@@ -134,7 +170,12 @@ export default function Invoices() {
                   <td>{formatINR((inv.cg + inv.sg).toFixed(2))}</td>
                   <td style={{ fontWeight: 600 }}>{formatINR(inv.total.toFixed(2))}</td>
                   <td>
-                    <button className="btn xs" onClick={() => setViewingInvoice(inv)}><i className="ti ti-eye" /> View</button>
+                    <button
+                      className="btn xs"
+                      onClick={() => alert('Invoice preview coming next')}
+                    >
+                      <i className="ti ti-eye" /> View
+                    </button>
                   </td>
                 </tr>
               ))

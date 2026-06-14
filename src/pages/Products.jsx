@@ -1,37 +1,62 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { stockStatus, formatINR } from '../utils/helpers'
+import { getCurrentUser } from '../lib/auth'
 
-const CATEGORIES = ['Wall Decor', 'Lighting', 'Furniture', 'Textiles', 'Vases & Pots', 'Clocks', 'Mirrors', 'Other']
+import {
+  addProduct,
+  deleteProduct,
+  getProducts,
+  updateProduct
+} from '../lib/products'
 
-const emptyForm = { name: '', category: 'Wall Decor', price: '', stock: '', desc: '' }
+
+
+const emptyForm = {
+  name: '',
+  price: '',
+  stock: '',
+  desc: ''
+}
+
+
 
 export default function Products() {
   const { currentUser, updateUserData, showToast } = useApp()
-  const { products } = currentUser
+  const products = currentUser?.products || []
 
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const filtered = products.filter(p =>
-    !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase())
+    !search ||
+    p.name.toLowerCase().includes(search.toLowerCase())
   )
 
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setSaveError('')
     setModalOpen(true)
   }
 
   function openEdit(product) {
     setEditingId(product.id)
-    setForm({ name: product.name, category: product.category, price: product.price, stock: product.stock, desc: product.desc || '' })
+    setForm({
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      desc: product.desc || ''
+    })
+    setSaveError('')
     setModalOpen(true)
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault()
     const name = form.name.trim()
     const price = parseFloat(form.price)
@@ -42,29 +67,76 @@ export default function Products() {
       return
     }
 
-    updateUserData(user => {
-      let newProducts
-      if (editingId) {
-        newProducts = user.products.map(p =>
-          p.id === editingId ? { ...p, name, category: form.category, price, stock, desc: form.desc } : p
-        )
-      } else {
-        const nextId = Math.max(100, ...user.products.map(p => p.id), 99) + 1
-        newProducts = [...user.products, { id: nextId, name, category: form.category, price, stock, desc: form.desc }]
-      }
-      return { ...user, products: newProducts }
-    })
+    setSaving(true)
+    setSaveError('')
 
-    showToast(editingId ? 'Product updated!' : 'Product added!')
-    setModalOpen(false)
+    try {
+      const authUser = await getCurrentUser()
+
+      if (!authUser?.id) {
+        throw new Error('Please sign in again before saving products.')
+      }
+
+      if (editingId) {
+        const { error } = await updateProduct(editingId, authUser.id, {
+          name,
+
+          price,
+          stock
+        })
+
+        if (error) throw error
+      } else {
+        const { error } = await addProduct({
+          user_id: authUser.id,
+          name,
+
+          price,
+          stock
+        })
+
+        if (error) throw error
+      }
+
+      const { data: savedProducts, error: reloadError } = await getProducts(authUser.id)
+
+      if (reloadError) {
+        throw reloadError
+      }
+
+      updateUserData(user => ({
+        ...user,
+        id: authUser.id,
+        products: savedProducts || []
+      }))
+
+      showToast(editingId ? 'Product updated!' : 'Product added!')
+      setModalOpen(false)
+    } catch (error) {
+      console.error(error)
+      setSaveError(error.message || 'Could not save product. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!confirm('Delete this product?')) return
-    updateUserData(user => ({ ...user, products: user.products.filter(p => p.id !== id) }))
+
+    const { error } = await deleteProduct(id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    updateUserData(user => ({
+      ...user,
+      products: user.products.filter(p => p.id !== id)
+    }))
+
     showToast('Product deleted.')
   }
-
   return (
     <div>
       <div className="page-header">
@@ -82,7 +154,7 @@ export default function Products() {
         <table>
           <thead>
             <tr>
-              <th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+              <th>Name</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -94,7 +166,6 @@ export default function Products() {
                 return (
                   <tr key={p.id}>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td><span className="badge blue">{p.category}</span></td>
                     <td>{formatINR(p.price)}</td>
                     <td style={p.stock <= 5 ? { color: 'var(--color-danger)', fontWeight: 600 } : {}}>{p.stock}</td>
                     <td><span className={`badge ${status.cls}`}>{status.label}</span></td>
@@ -120,12 +191,7 @@ export default function Products() {
                   <label className="form-label">Name</label>
                   <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+                
               </div>
               <div className="form-row cols-2">
                 <div className="form-group">
@@ -141,9 +207,10 @@ export default function Products() {
                 <label className="form-label">Description</label>
                 <textarea rows={2} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} />
               </div>
+              {saveError && <div className="error-text">{saveError}</div>}
               <div className="modal-actions">
-                <button type="button" className="btn" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn primary">Save</button>
+                <button type="button" className="btn" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
               </div>
             </form>
           </div>
