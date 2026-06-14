@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { getSession } from '../lib/auth'
 import { getProducts } from '../lib/products'
+import { getCustomers } from '../lib/customers'
+import { getInvoices } from '../lib/invoices'
 const AppContext = createContext(null)
 
 const STORAGE_KEY = 'jkhd_data'
@@ -86,6 +88,7 @@ export function AppProvider({ children }) {
       const email = session.user.email?.toLowerCase()
       const authUserId = session.user.id
 
+
       if (!allUsers[email]) {
         setAllUsers(prev => ({
           ...prev,
@@ -116,6 +119,8 @@ export function AppProvider({ children }) {
       setCurrentUserId(email)
       setCurrentAuthUserId(authUserId)
       await loadProductsFromSupabase(session.user)
+      await loadInvoicesFromSupabase(session.user)
+      await loadCustomersFromSupabase(session.user)
     }
 
     restoreSession()
@@ -138,6 +143,43 @@ export function AppProvider({ children }) {
         ...prev[user.email.toLowerCase()],
         id: user.id,
         products: data || []
+      }
+    }))
+  }
+  async function loadInvoicesFromSupabase(user) {
+    if (!user?.id || !user?.email) return
+
+    const { data, error } = await getInvoices(user.id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setAllUsers(prev => ({
+      ...prev,
+      [user.email.toLowerCase()]: {
+        ...prev[user.email.toLowerCase()],
+        invoices: data || []
+      }
+    }))
+  }
+  async function loadCustomersFromSupabase(user) {
+    if (!user?.id || !user?.email) return
+
+    const { data, error } = await getCustomers(user.id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setAllUsers(prev => ({
+      ...prev,
+      [user.email.toLowerCase()]: {
+        ...prev[user.email.toLowerCase()],
+        id: user.id,
+        customers: data || []
       }
     }))
   }

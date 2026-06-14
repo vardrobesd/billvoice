@@ -5,45 +5,40 @@ import { formatINR } from '../utils/helpers'
 
 export default function Reports() {
   const { currentUser } = useApp()
-  const { invoices } = currentUser
+  const invoices = currentUser?.invoices || []
 
   const revenue = invoices.reduce((sum, i) => sum + i.total, 0)
-  const totalGst = invoices.reduce((sum, i) => sum + i.cg + i.sg, 0)
+  const totalGst = invoices.reduce(
+    (sum, i) => sum + Number(i.gst_amount || 0),
+    0
+  )
   const avgInvoice = invoices.length ? revenue / invoices.length : 0
 
   // Revenue by month
   const monthlyData = useMemo(() => {
     const map = {}
+
     invoices.forEach(inv => {
-      const parts = inv.date.split(' ')
-      const key = (parts[1] || '') + (parts[2] ? "'" + parts[2].slice(-2) : '')
-      map[key] = (map[key] || 0) + inv.total
+      const d = new Date(inv.created_at)
+      const key = d.toLocaleString('en-IN', {
+        month: 'short',
+        year: '2-digit'
+      })
+
+      map[key] = (map[key] || 0) + Number(inv.total || 0)
     })
-    return Object.entries(map).map(([name, value]) => ({ name, value: Math.round(value) }))
+
+    return Object.entries(map).map(([name, value]) => ({
+      name,
+      value: Math.round(value)
+    }))
   }, [invoices])
 
   // Top products by revenue
-  const productData = useMemo(() => {
-    const map = {}
-    invoices.forEach(inv => inv.items.forEach(it => {
-      map[it.name] = (map[it.name] || 0) + it.subtotal
-    }))
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, value]) => ({ name, value: Math.round(value) }))
-  }, [invoices])
+  const productData = []
 
   // Top customers by revenue
-  const customerData = useMemo(() => {
-    const map = {}
-    invoices.forEach(inv => {
-      if (!map[inv.custName]) map[inv.custName] = { name: inv.custName, count: 0, revenue: 0 }
-      map[inv.custName].count++
-      map[inv.custName].revenue += inv.total
-    })
-    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 8)
-  }, [invoices])
+  const customerData = []
 
   return (
     <div>

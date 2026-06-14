@@ -172,7 +172,7 @@ export default function Invoices() {
                   <td>
                     <button
                       className="btn xs"
-                      onClick={() => alert('Invoice preview coming next')}
+                      onClick={() => setViewingInvoice(inv)}
                     >
                       <i className="ti ti-eye" /> View
                     </button>
