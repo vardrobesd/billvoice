@@ -1,6 +1,6 @@
-# JK Home Decor — Business Manager
+# BillVoice— Business Manager
 
-A simple business management web app for **JK Home Decor**: manage products, track inventory, create GST tax invoices, manage customers, and view sales reports.
+A simple business management web app for **BillVoice**: manage products, track inventory, create GST tax invoices, manage customers, and view sales reports.
 
 ## Features
 

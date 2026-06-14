@@ -9,8 +9,8 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
       <div className="brand">
-        <div className="brand-name">JK Home Decor</div>
-        <div className="brand-sub">Business Manager</div>
+        <div className="brand-name">BillVoice</div>
+        <div className="brand-sub">Smart Billing & Inventory</div>
       </div>
 
       <div className="user-pill">

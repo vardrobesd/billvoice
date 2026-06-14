@@ -41,8 +41,16 @@ export default function AuthPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 18, fontWeight: 600 }}>JK Home Decor</div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4 }}>Business Manager</div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>BillVoice</div>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--color-text-secondary)',
+              marginTop: 4
+            }}
+          >
+            Smart Billing & Inventory
+          </div>
         </div>
 
         <div className="auth-tabs">
@@ -81,7 +89,7 @@ export default function AuthPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Business name</label>
-                <input value={regBiz} onChange={e => setRegBiz(e.target.value)} placeholder="JK Home Decor" />
+                <input value={regBiz} onChange={e => setRegBiz(e.target.value)} placeholder="BillVoice" />
               </div>
             </div>
             <div className="form-group">
