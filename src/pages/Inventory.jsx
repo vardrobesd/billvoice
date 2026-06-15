@@ -51,7 +51,7 @@ export default function Inventory() {
         </div>
       </div>
 
-      <div className="card no-padding">
+      <div className="card no-padding inventory-table">
         <table>
           <thead>
             <tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th><th>Adjust</th></tr>
@@ -66,8 +66,8 @@ export default function Inventory() {
                   <td style={p.stock <= 5 ? { color: 'var(--color-danger)', fontWeight: 600 } : {}}>{p.stock}</td>
                   <td><span className={`badge ${status.cls}`}>{status.label}</span></td>
                   <td>
-                    <button className="btn xs" onClick={() => adjustStock(p.id, -1)}><i className="ti ti-minus" /></button>{' '}
-                    <button className="btn xs" onClick={() => adjustStock(p.id, 1)}><i className="ti ti-plus" /></button>{' '}
+                    <button className="btn xs" onClick={() => adjustStock(p.id, -1)}>-</button>{' '}
+                    <button className="btn xs" onClick={() => adjustStock(p.id, 1)}>+</button>{' '}
                     <button className="btn xs" onClick={() => setStock(p.id, p.stock, p.name)}><i className="ti ti-edit" /> Set</button>
                   </td>
                 </tr>
@@ -75,6 +75,56 @@ export default function Inventory() {
             })}
           </tbody>
         </table>
+      </div>
+      <div className="inventory-cards">
+        {products.map(p => {
+          const status = stockStatus(p.stock)
+
+          return (
+            <div className="inventory-card" key={p.id}>
+              <div className="inventory-card-header">
+                <div className="inventory-product-name">
+                  {p.name}
+                </div>
+
+                <span className={`badge ${status.cls}`}>
+                  {status.label}
+                </span>
+              </div>
+
+              <div className="inventory-stock">
+                Stock: <strong>{p.stock}</strong>
+              </div>
+
+              <div className="inventory-controls">
+                <button
+                  className="btn stock-btn"
+                  onClick={() => adjustStock(p.id, -1)}
+                >
+                  −
+                </button>
+
+                <button
+                  className="btn inventory-set-btn"
+                  onClick={() => setStock(p.id, p.stock, p.name)}
+                >
+                  Set Stock
+                </button>
+
+                <button
+                  className="btn stock-btn"
+                  onClick={() => adjustStock(p.id, 1)}
+                >
+                  +
+                </button>
+              </div>
+
+              <div className="stock-value">
+                Current: {p.stock}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

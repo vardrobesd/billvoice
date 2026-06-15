@@ -170,8 +170,19 @@ export default function Products() {
                     <td style={p.stock <= 5 ? { color: 'var(--color-danger)', fontWeight: 600 } : {}}>{p.stock}</td>
                     <td><span className={`badge ${status.cls}`}>{status.label}</span></td>
                     <td>
-                      <button className="btn xs" onClick={() => openEdit(p)}><i className="ti ti-edit" /></button>{' '}
-                      <button className="btn xs danger" onClick={() => handleDelete(p.id)}><i className="ti ti-trash" /></button>
+                      <button
+                        className="btn"
+                        onClick={() => openEdit(p)}
+                      >
+                        Edit
+                      </button>{' '}
+
+                      <button
+                        className="btn danger"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 )

@@ -217,8 +217,14 @@ export default function Invoices() {
         </button>
       </div>
 
-      <div className="card no-padding">
-        <table>
+      <div
+        className="card no-padding invoice-table"
+        style={{
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        <table style={{ minWidth: '900px' }}>
           <thead>
             <tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Taxable</th><th>GST</th><th>Total</th><th></th></tr>
           </thead>
@@ -226,7 +232,7 @@ export default function Invoices() {
             {invoices.length === 0 ? (
               <tr><td colSpan={7} className="empty-state">No invoices yet.</td></tr>
             ) : (
-              [...invoices].reverse().map(inv => (
+              invoices.map(inv => (
                 <tr key={inv.id}>
                   <td style={{ fontWeight: 600 }}>
                     {inv.invoice_number}
@@ -247,7 +253,14 @@ export default function Invoices() {
                   <td style={{ fontWeight: 600 }}>
                     {formatINR(Number(inv.total || 0))}
                   </td>
-                  <td style={{ display: 'flex', gap: 6 }}>
+                  <td>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        flexWrap: 'wrap'
+                      }}
+                    >
                     <button
                       className="btn xs"
                       onClick={() => setViewingInvoice(inv)}
@@ -261,12 +274,60 @@ export default function Invoices() {
                     >
                       <i className="ti ti-trash" /> Delete
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+      </div>
+      <div className="invoice-cards">
+        {invoices.length === 0 ? (
+          <div className="card">
+            No invoices yet.
+          </div>
+        ) : (
+          invoices.map(inv => (
+            <div className="invoice-card" key={inv.id}>
+              <div className="invoice-card-header">
+                <div className="invoice-number">
+                  #{inv.invoice_number}
+                </div>
+
+                <div className="invoice-total">
+                  {formatINR(Number(inv.total || 0))}
+                </div>
+              </div>
+
+              <div className="invoice-customer">
+                {inv.custName || '—'}
+              </div>
+
+              <div className="invoice-date">
+                {inv.created_at
+                  ? new Date(inv.created_at).toLocaleDateString('en-IN')
+                  : '—'}
+              </div>
+
+              <div className="invoice-actions">
+                <button
+                  className="btn xs"
+                  onClick={() => setViewingInvoice(inv)}
+                >
+                  <i className="ti ti-eye" /> View
+                </button>
+
+                <button
+                  className="btn xs"
+                  onClick={() => handleDeleteInvoice(inv)}
+                >
+                  <i className="ti ti-trash" /> Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* CREATE INVOICE MODAL */}
@@ -317,8 +378,21 @@ export default function Invoices() {
                 items.map((it, idx) => {
                   const p = products.find(x => x.id === it.pid)
                   return (
-                    <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 7 }}>
-                      <select style={{ flex: 2 }} value={it.pid || ''} onChange={e => updateItem(idx, 'pid', parseInt(e.target.value, 10))}>
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        alignItems: 'center',
+                        marginBottom: 7,
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <select
+                        style={{
+                          flex: 2,
+                          minWidth: '180px'
+                        }} value={it.pid || ''} onChange={e => updateItem(idx, 'pid', parseInt(e.target.value, 10))}>
                         {products.map(pr => <option key={pr.id} value={pr.id}>{pr.name} (₹{pr.price})</option>)}
                       </select>
                       <input type="number" min="1" value={it.qty} style={{ width: 58, flexShrink: 0 }}

@@ -133,7 +133,7 @@ export default function Customers() {
         <input className="search-input" placeholder="Search customers…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      <div className="card no-padding">
+      <div className="card no-padding customers-table">
         <table>
           <thead>
             <tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>GSTIN</th><th>Invoices</th><th>Actions</th></tr>
@@ -142,7 +142,7 @@ export default function Customers() {
             {filtered.length === 0 ? (
               <tr><td colSpan={7} className="empty-state">No customers yet.</td></tr>
             ) : (
-              filtered.map(c => (
+              [...filtered].reverse().map(c => (
                 <tr key={c.id}>
                   <td style={{ fontWeight: 600 }}>{c.name}</td>
                   <td>{c.phone || '—'}</td>
@@ -153,14 +153,86 @@ export default function Customers() {
                   <td>{c.gstin || '—'}</td>
                   <td>{invoiceCount(c.id)}</td>
                   <td>
-                    <button className="btn xs" onClick={() => openEdit(c)}><i className="ti ti-edit" /></button>{' '}
-                    <button className="btn xs danger" onClick={() => handleDelete(c.id)}><i className="ti ti-trash" /></button>
+                    <button
+                      className="btn"
+                      onClick={() => openEdit(c)}
+                    >
+                      Edit
+                    </button>{' '}
+
+                    <button
+                      className="btn danger"
+                      onClick={() => handleDelete(c.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+      </div>
+      <div className="customer-cards">
+        {filtered.length === 0 ? (
+          <div className="card">
+            No customers yet.
+          </div>
+        ) : (
+          [...filtered].reverse().map(c => (
+            <div className="customer-card" key={c.id}>
+              <div className="customer-card-header">
+                <div className="customer-name">
+                  {c.name}
+                </div>
+
+                <div className="customer-invoices">
+                  {invoiceCount(c.id)} invoices
+                </div>
+              </div>
+
+              {c.phone && (
+                <div className="customer-detail">
+                  📞 {c.phone}
+                </div>
+              )}
+
+              {c.email && (
+                <div className="customer-detail">
+                  ✉️ {c.email}
+                </div>
+              )}
+
+              {c.address && (
+                <div className="customer-detail">
+                  📍 {c.address}
+                </div>
+              )}
+
+              {c.gstin && (
+                <div className="customer-detail">
+                  GSTIN: {c.gstin}
+                </div>
+              )}
+
+              <div className="customer-actions">
+                <button
+                  className="btn"
+                  onClick={() => openEdit(c)}
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="btn danger"
+                  onClick={() => handleDelete(c.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {modalOpen && (

@@ -409,3 +409,178 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+.invoice-cards {
+  display: none;
+}
+
+.invoice-card {
+  background: white;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+.invoice-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.invoice-number {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.invoice-total {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.invoice-customer {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.invoice-date {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #777;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+@media (max-width: 768px) {
+  .invoice-table {
+    display: none;
+  }
+
+  .invoice-cards {
+    display: block;
+  }
+}
+.customer-cards {
+  display: none;
+}
+
+.customer-card {
+  background: white;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+.customer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.customer-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.customer-invoices {
+  font-size: 12px;
+  color: #777;
+}
+
+.customer-detail {
+  font-size: 13px;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.customer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width:768px) {
+  .customers-table {
+    display: none;
+  }
+
+  .customer-cards {
+    display: block;
+  }
+}
+
+.inventory-cards {
+  display: none;
+}
+
+.inventory-card {
+  background: white;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+.inventory-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.inventory-product-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.inventory-stock {
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+.inventory-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.inventory-set-btn {
+  flex: 1;
+}
+.stock-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stock-value {
+  min-width: 40px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.inventory-set-btn {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .inventory-table {
+    display: none;
+  }
+
+  .inventory-cards {
+    display: block;
+  }
+}
