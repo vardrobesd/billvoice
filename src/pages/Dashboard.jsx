@@ -1,8 +1,10 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { stockStatus, formatINR } from '../utils/helpers'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { currentUser } = useApp()
   const products = currentUser?.products || []
 
@@ -17,8 +19,24 @@ export default function Dashboard() {
   return (
     <div>
       <div className="page-header">
-        <div className="page-title">Dashboard</div>
-        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{today}</span>
+        <div>
+          <div className="page-title">Dashboard</div>
+          <span
+            style={{
+              fontSize: 11,
+              color: 'var(--color-text-secondary)'
+            }}
+          >
+            {today}
+          </span>
+        </div>
+
+        <button
+          className="btn primary"
+          onClick={() => navigate('/invoices')}
+        >
+          + Create Invoice
+        </button>
       </div>
 
       <div className="stat-grid cols-4">
@@ -35,7 +53,7 @@ export default function Dashboard() {
           <div className="stat-value">{invoices.length}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Revenue</div>
+          <div className="stat-label">Total Revenue</div>
           <div className="stat-value green">{formatINR(Math.round(revenue))}</div>
         </div>
       </div>
@@ -77,6 +95,45 @@ export default function Dashboard() {
               </div>
             ))
           )}
+        </div>
+        <div className="card">
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 12
+            }}
+          >
+            Quick Actions
+          </div>
+
+          <div className="quick-actions">
+            <button
+              className="btn primary quick-action-main"
+              onClick={() => navigate('/invoices')}
+            >
+              <i className="ti ti-file-invoice" />
+              Create Invoice
+            </button>
+
+            <div className="quick-action-grid">
+              <button
+                className="btn quick-action-btn"
+                onClick={() => navigate('/customers')}
+              >
+                <i className="ti ti-user-plus" />
+                Customer
+              </button>
+
+              <button
+                className="btn quick-action-btn"
+                onClick={() => navigate('/inventory')}
+              >
+                <i className="ti ti-package" />
+                Product
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

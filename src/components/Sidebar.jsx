@@ -15,10 +15,24 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
       </div>
 
       <div className="user-pill">
-        <div className="avatar">{initials(currentUser?.name || 'User')}</div>
+        <div className="avatar">
+          {initials(
+            currentUser?.settings?.bname ||
+            currentUser?.name ||
+            'User'
+          )}
+        </div>
+
         <div style={{ overflow: 'hidden', minWidth: 0 }}>
-          <div className="user-name">{currentUser?.name || 'User'}</div>
-          <div className="user-email">{currentUser?.email || ''}</div>
+          <div className="user-name">
+            {currentUser?.settings?.bname ||
+              currentUser?.name ||
+              'User'}
+          </div>
+
+          <div className="user-email">
+            {currentUser?.email || ''}
+          </div>
         </div>
       </div>
 

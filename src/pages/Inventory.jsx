@@ -1,5 +1,6 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
+import { updateProduct } from '../lib/products'
 import { stockStatus } from '../utils/helpers'
 
 export default function Inventory() {
@@ -10,23 +11,69 @@ export default function Inventory() {
   const lowCount = products.filter(p => p.stock > 0 && p.stock <= 5).length
   const outCount = products.filter(p => p.stock === 0).length
 
-  function adjustStock(id, delta) {
+  async function adjustStock(id, delta) {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+
+    const newStock = Math.max(0, product.stock + delta)
+
+    const { error } = await updateProduct(
+      id,
+      currentUser.id,
+      { stock: newStock }
+    )
+
+    if (error) {
+      console.error(error)
+      showToast('Failed to update stock')
+      return
+    }
+
     updateUserData(user => ({
       ...user,
-      products: user.products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p)
+      products: user.products.map(p =>
+        p.id === id
+          ? { ...p, stock: newStock }
+          : p
+      )
     }))
+
     showToast('Stock updated.')
   }
 
-  function setStock(id, currentStock, name) {
-    const input = prompt(`Set stock for ${name}:`, currentStock)
+  async function setStock(id, currentStock, name) {
+    const input = prompt(
+      `Set stock for ${name}:`,
+      currentStock
+    )
+
     if (input === null) return
+
     const n = parseInt(input, 10)
+
     if (isNaN(n) || n < 0) return
+
+    const { error } = await updateProduct(
+      id,
+      currentUser.id,
+      { stock: n }
+    )
+
+    if (error) {
+      console.error(error)
+      showToast('Failed to update stock')
+      return
+    }
+
     updateUserData(user => ({
       ...user,
-      products: user.products.map(p => p.id === id ? { ...p, stock: n } : p)
+      products: user.products.map(p =>
+        p.id === id
+          ? { ...p, stock: n }
+          : p
+      )
     }))
+
     showToast('Stock set.')
   }
 
@@ -104,12 +151,9 @@ export default function Inventory() {
                   −
                 </button>
 
-                <button
-                  className="btn inventory-set-btn"
-                  onClick={() => setStock(p.id, p.stock, p.name)}
-                >
-                  Set Stock
-                </button>
+                <div className="mobile-stock-value">
+                  {p.stock}
+                </div>
 
                 <button
                   className="btn stock-btn"
@@ -119,9 +163,12 @@ export default function Inventory() {
                 </button>
               </div>
 
-              <div className="stock-value">
-                Current: {p.stock}
-              </div>
+              <button
+                className="btn inventory-set-btn"
+                onClick={() => setStock(p.id, p.stock, p.name)}
+              >
+                Set Stock
+              </button>
             </div>
           )
         })}
