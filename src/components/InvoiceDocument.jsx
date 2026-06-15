@@ -5,7 +5,8 @@ import { numberToWords } from '../utils/helpers'
 // Used inside the "view invoice" modal and matches the PDF output structure.
 export default function InvoiceDocument({ invoice, settings }) {
   const prefix = settings.prefix || 'INV'
-  const invoiceNo = `${prefix}-${String(invoice.id).padStart(4, '0')}`
+  const invoiceNo =
+    `${prefix}-${String(invoice.invoice_number).padStart(3, '0')}`
   console.log(invoice)
 
   return (

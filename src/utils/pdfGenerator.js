@@ -6,7 +6,8 @@ export function generateInvoicePDF(invoice, settings) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const s = settings
   const prefix = s.prefix || 'INV'
-  const invoiceNo = `${prefix}-${String(invoice.id).padStart(4, '0')}`
+  const invoiceNo =
+    `${prefix}-${String(invoice.invoice_number).padStart(3, '0')}`
 
   const pageWidth = 210
   const leftMargin = 15

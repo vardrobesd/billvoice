@@ -152,7 +152,8 @@ export function AppProvider({ children }) {
           cgst: data.cgst || '9',
           sgst: data.sgst || '9',
           prefix: data.prefix || 'INV',
-          sig: data.sig || ''
+          sig: data.sig || '',
+          invoice_start_number: data.invoice_start_number || 1
         }
       }
     }))

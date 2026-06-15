@@ -71,7 +71,7 @@ export default function Dashboard() {
           ) : (
             recentInvoices.map(inv => (
               <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--color-border)', fontSize: 13 }}>
-                <span style={{ fontWeight: 600 }}>{settings.prefix || 'INV'}-{String(inv.id).padStart(4, '0')}</span>
+                <span style={{ fontWeight: 600 }}>{settings.prefix || 'INV'}-{String(inv.invoice_number).padStart(3, '0')}</span>
                 <span style={{ color: 'var(--color-text-secondary)' }}>{inv.custName}</span>
                 <span style={{ fontWeight: 600 }}>{formatINR(Math.round(inv.total))}</span>
               </div>

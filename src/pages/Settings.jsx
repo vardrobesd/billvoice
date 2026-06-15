@@ -38,7 +38,8 @@ export default function Settings() {
       cgst: settingsData.cgst,
       sgst: settingsData.sgst,
       prefix: settingsData.prefix,
-      sig: settingsData.sig
+      sig: settingsData.sig,
+      invoice_start_number: Number(form.invoice_start_number || 1),
     })
 
     if (error) {
@@ -124,6 +125,23 @@ export default function Settings() {
               <label className="form-label">Invoice prefix</label>
               <input value={form.prefix || ''} onChange={e => handleChange('prefix', e.target.value)} />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              Starting Invoice Number
+            </label>
+
+            <input
+              type="number"
+              value={form.invoice_start_number || ''}
+              onChange={e =>
+                handleChange(
+                  'invoice_start_number',
+                  e.target.value
+                )
+              }
+            />
           </div>
 
           <div className="divider" />

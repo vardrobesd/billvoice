@@ -5,13 +5,16 @@ import { generateInvoicePDF } from '../utils/pdfGenerator'
 import InvoiceDocument from '../components/InvoiceDocument'
 import { getCurrentUser } from '../lib/auth'
 
+
 import {
   addInvoice,
   addInvoiceItems,
-  getInvoices
+  getInvoices,
+  deleteInvoice
 } from '../lib/invoices'
 
 export default function Invoices() {
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState('')
   const { currentUser, updateUserData, showToast } = useApp()
   const invoices = currentUser?.invoices || []
   const customers = currentUser?.customers || []
@@ -33,6 +36,7 @@ export default function Invoices() {
     setCustAddr('')
     setPos(settings.pos || '')
     setItems([])
+    setCustomInvoiceNumber('')
     setCreateOpen(true)
   }
 
@@ -80,11 +84,36 @@ export default function Invoices() {
     const sg = tax * sgstRate / 100
 
     const authUser = await getCurrentUser()
+      const startNumber =
+        Number(currentUser.settings?.invoice_start_number || 1)
 
+      const existingNumbers = (invoices || [])
+        .map(inv => Number(inv.invoice_number))
+        .filter(n => !isNaN(n))
+
+      const nextInvoiceNumber =
+        existingNumbers.length > 0
+          ? Math.max(...existingNumbers) + 1
+          : startNumber
+          if (customInvoiceNumber) {
+            const alreadyExists = invoices.some(
+              inv =>
+                String(inv.invoice_number) ===
+                String(customInvoiceNumber)
+            )
+
+            if (alreadyExists) {
+              alert('Invoice number already exists')
+              return
+            }
+          }
+
+          const invoiceNumberToUse =
+            customInvoiceNumber || nextInvoiceNumber
       const { data: invoiceData, error: invoiceError } = await addInvoice({
         user_id: authUser.id,
         customer_id: customer.id,
-        invoice_number: `INV-${Date.now()}`,
+        invoice_number: String(invoiceNumberToUse),
         subtotal: tax,
         gst_amount: cg + sg,
         total: tax + cg + sg
@@ -119,17 +148,53 @@ export default function Invoices() {
         return
       }
 
-      const { data: invoicesData } = await getInvoices(authUser.id)
+      const newInvoice = {
+        ...invoiceData[0],
+
+        custName: customer.name,
+        custAddr: customer.address || '',
+        custGstin: customer.gstin || '',
+
+        items: dbItems.map(item => ({
+          name: item.product_name,
+          qty: item.quantity,
+          price: item.price,
+          subtotal: item.amount
+        }))
+      }
 
       updateUserData(user => ({
         ...user,
-        invoices: invoicesData || []
+        invoices: [...user.invoices, newInvoice]
       }))
 
     showToast('Invoice created!')
     setCreateOpen(false)
   }
+  async function handleDeleteInvoice(invoice) {
+    const ok = window.confirm(
+      `Delete invoice ${settings.prefix || 'INV'}-${invoice.invoice_number}?`
+    )
 
+    if (!ok) return
+
+    const { error } = await deleteInvoice(invoice.id)
+
+    if (error) {
+      console.error(error)
+      alert(error.message)
+      return
+    }
+
+    updateUserData(user => ({
+      ...user,
+      invoices: user.invoices.filter(
+        inv => inv.id !== invoice.id
+      )
+    }))
+
+    showToast('Invoice deleted')
+  }
   async function handleDownloadPDF() {
     if (!viewingInvoice) return
     setPdfGenerating(true)
@@ -182,12 +247,19 @@ export default function Invoices() {
                   <td style={{ fontWeight: 600 }}>
                     {formatINR(Number(inv.total || 0))}
                   </td>
-                  <td>
+                  <td style={{ display: 'flex', gap: 6 }}>
                     <button
                       className="btn xs"
                       onClick={() => setViewingInvoice(inv)}
                     >
                       <i className="ti ti-eye" /> View
+                    </button>
+
+                    <button
+                      className="btn xs"
+                      onClick={() => handleDeleteInvoice(inv)}
+                    >
+                      <i className="ti ti-trash" /> Delete
                     </button>
                   </td>
                 </tr>
@@ -220,6 +292,19 @@ export default function Invoices() {
               <div className="form-group">
                 <label className="form-label">Customer address</label>
                 <input value={custAddr} onChange={e => setCustAddr(e.target.value)} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  Custom Invoice Number (Optional)
+                </label>
+
+                <input
+                  type="text"
+                  value={customInvoiceNumber}
+                  onChange={e => setCustomInvoiceNumber(e.target.value)}
+                  placeholder="Leave blank for auto numbering"
+                />
               </div>
 
               <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 7 }}>
