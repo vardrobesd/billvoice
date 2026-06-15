@@ -112,8 +112,9 @@ export function generateInvoicePDF(invoice, settings) {
   y += 4
 
   // Totals box
-  const boxX = leftMargin + tableWidth * 0.67
-  const boxW = tableWidth * 0.30
+  const boxX = leftMargin + tableWidth * 0.58
+  const boxW = tableWidth * 0.42
+  
 
   doc.setDrawColor(220, 220, 220)
   doc.setLineWidth(0.3)
@@ -158,7 +159,7 @@ export function generateInvoicePDF(invoice, settings) {
   doc.text('Amount in words: ', leftMargin, y)
   doc.setFont('helvetica', 'normal')
   doc.text(numberToWords(Math.round(invoice.total)) + ' Rupees Only', leftMargin + 30, y)
-  y += 10
+  y += 22
 
   // Signature
   if (s.sig) {
@@ -181,7 +182,7 @@ export function generateInvoicePDF(invoice, settings) {
   // Footer
   doc.setFontSize(8)
   doc.setTextColor(150, 150, 150)
-  doc.text('Thank you for your business!', pageWidth / 2, 285, { align: 'center' })
+  doc.text('Thank you for your purchase!', pageWidth / 2, 285, { align: 'center' })
 
   doc.save(`${invoiceNo}.pdf`)
   return invoiceNo
