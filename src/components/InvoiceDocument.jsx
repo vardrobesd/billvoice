@@ -6,6 +6,7 @@ import { numberToWords } from '../utils/helpers'
 export default function InvoiceDocument({ invoice, settings }) {
   const prefix = settings.prefix || 'INV'
   const invoiceNo = `${prefix}-${String(invoice.id).padStart(4, '0')}`
+  console.log(invoice)
 
   return (
     <div className="invoice-doc">
@@ -23,7 +24,11 @@ export default function InvoiceDocument({ invoice, settings }) {
           <div className="invoice-tax-label">TAX INVOICE</div>
           <div className="invoice-meta-lines">
             <b>Invoice No:</b> {invoiceNo}<br />
-            <b>Date:</b> {invoice.date}<br />
+            <b>Date:</b> {
+              invoice.created_at
+                ? new Date(invoice.created_at).toLocaleDateString('en-IN')
+                : '—'
+            }<br />
             <b>Place of supply:</b> {invoice.pos || settings.pos || '—'}
           </div>
         </div>
@@ -31,7 +36,7 @@ export default function InvoiceDocument({ invoice, settings }) {
 
       <div className="bill-to-box">
         <b>Bill to:</b><br />
-        {invoice.custName}<br />
+        {invoice.custName || '—'}<br />
         {invoice.custAddr || '—'}
         {invoice.custGstin && <><br /><b>GSTIN:</b> {invoice.custGstin}</>}
       </div>
@@ -62,19 +67,33 @@ export default function InvoiceDocument({ invoice, settings }) {
           <tbody>
             <tr>
               <td>Taxable value</td>
-              <td style={{ textAlign: 'right' }}>₹{invoice.tax.toLocaleString('en-IN')}</td>
+              <td style={{ textAlign: 'right' }}>
+                ₹{Number(invoice.subtotal || 0).toLocaleString('en-IN')}
+              </td>
             </tr>
+
             <tr>
-              <td>CGST @ {invoice.cr}%</td>
-              <td style={{ textAlign: 'right' }}>₹{invoice.cg.toFixed(2)}</td>
+              <td>CGST</td>
+              <td style={{ textAlign: 'right' }}>
+                ₹{(Number(invoice.gst_amount || 0) / 2).toFixed(2)}
+              </td>
             </tr>
+
             <tr>
-              <td>SGST @ {invoice.sr}%</td>
-              <td style={{ textAlign: 'right' }}>₹{invoice.sg.toFixed(2)}</td>
+              <td>SGST</td>
+              <td style={{ textAlign: 'right' }}>
+                ₹{(Number(invoice.gst_amount || 0) / 2).toFixed(2)}
+              </td>
             </tr>
-            <tr className="total-row" style={{ borderTop: '1.5px solid var(--color-primary)' }}>
+
+            <tr
+              className="total-row"
+              style={{ borderTop: '1.5px solid var(--color-primary)' }}
+            >
               <td style={{ paddingTop: 6 }}>Total invoice value</td>
-              <td style={{ textAlign: 'right', paddingTop: 6 }}>₹{invoice.total.toFixed(2)}</td>
+              <td style={{ textAlign: 'right', paddingTop: 6 }}>
+                ₹{Number(invoice.total || 0).toFixed(2)}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -83,7 +102,7 @@ export default function InvoiceDocument({ invoice, settings }) {
       <div className="invoice-footer-row">
         <div>
           <b>Amount in words:</b><br />
-          {numberToWords(Math.round(invoice.total))} Rupees Only
+          {numberToWords(Math.round(Number(invoice.total || 0)))} Rupees Only
         </div>
         {settings.sig ? (
           <div style={{ marginTop: 18, textAlign: 'right' }}>

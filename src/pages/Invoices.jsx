@@ -163,12 +163,25 @@ export default function Invoices() {
             ) : (
               [...invoices].reverse().map(inv => (
                 <tr key={inv.id}>
-                  <td style={{ fontWeight: 600 }}>{settings.prefix || 'INV'}-{String(inv.id).padStart(4, '0')}</td>
-                  <td>{inv.custName}</td>
-                  <td>{inv.date}</td>
-                  <td>{formatINR(inv.tax)}</td>
-                  <td>{formatINR((inv.cg + inv.sg).toFixed(2))}</td>
-                  <td style={{ fontWeight: 600 }}>{formatINR(inv.total.toFixed(2))}</td>
+                  <td style={{ fontWeight: 600 }}>
+                    {inv.invoice_number}
+                  </td>
+
+                  <td>{inv.custName || '—'}</td>
+
+                  <td>
+                    {inv.created_at
+                      ? new Date(inv.created_at).toLocaleDateString('en-IN')
+                      : '—'}
+                  </td>
+
+                  <td>{formatINR(Number(inv.subtotal || 0))}</td>
+
+                  <td>{formatINR(Number(inv.gst_amount || 0))}</td>
+
+                  <td style={{ fontWeight: 600 }}>
+                    {formatINR(Number(inv.total || 0))}
+                  </td>
                   <td>
                     <button
                       className="btn xs"

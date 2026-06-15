@@ -89,9 +89,9 @@ export function generateInvoicePDF(invoice, settings) {
   doc.setFontSize(9)
   doc.setTextColor(255, 255, 255)
   doc.text('Item', leftMargin + 3, y + 4.8)
-  doc.text('Qty', leftMargin + tableWidth * 0.6, y + 4.8, { align: 'center' })
-  doc.text('Rate (₹)', leftMargin + tableWidth * 0.78, y + 4.8, { align: 'right' })
-  doc.text('Amount (₹)', leftMargin + tableWidth, y + 4.8, { align: 'right' })
+  doc.text('Qty', leftMargin + tableWidth * 0.58, y + 4.8, { align: 'center' })
+  doc.text('Rate (Rs.)', leftMargin + tableWidth * 0.74, y + 4.8, { align: 'right' })
+  doc.text('Taxable Value (Rs.)', leftMargin + tableWidth - 8, y + 4.8, { align: 'right' })
   y += 7
 
   // Items rows
@@ -104,46 +104,46 @@ export function generateInvoicePDF(invoice, settings) {
     doc.setFontSize(9)
     doc.setTextColor(30, 30, 30)
     doc.text(item.name.substring(0, 38), leftMargin + 3, y + 4.4)
-    doc.text(String(item.qty), leftMargin + tableWidth * 0.6, y + 4.4, { align: 'center' })
-    doc.text('₹' + item.price.toLocaleString('en-IN'), leftMargin + tableWidth * 0.78, y + 4.4, { align: 'right' })
-    doc.text('₹' + item.subtotal.toLocaleString('en-IN'), leftMargin + tableWidth, y + 4.4, { align: 'right' })
+    doc.text(String(item.qty), leftMargin + tableWidth * 0.58, y + 4.4, { align: 'center' })
+    doc.text('Rs.' + item.price.toFixed(2), leftMargin + tableWidth * 0.74, y + 4.4, { align: 'right' })
+    doc.text('Rs.' + item.subtotal.toFixed(2), leftMargin + tableWidth - 8, y + 4.4, { align: 'right' })    
     y += 6.5
   })
   y += 4
 
   // Totals box
-  const boxX = leftMargin + tableWidth * 0.55
-  const boxW = tableWidth * 0.45
+  const boxX = leftMargin + tableWidth * 0.67
+  const boxW = tableWidth * 0.30
 
   doc.setDrawColor(220, 220, 220)
   doc.setLineWidth(0.3)
-  doc.line(boxX, y, boxX + boxW, y)
+  doc.line(boxX, y, boxX + boxW - 4, y)
   y += 5
 
   doc.setFontSize(9)
   doc.setTextColor(80, 80, 80)
   doc.text('Taxable value', boxX + 2, y)
-  doc.text('₹' + invoice.tax.toLocaleString('en-IN'), boxX + boxW, y, { align: 'right' })
+  doc.text(`Rs.${Number(invoice.subtotal || 0).toFixed(2)}`, boxX + boxW-4 , y, { align: 'right' })
   y += 5
 
-  doc.text(`CGST @ ${invoice.cr}%`, boxX + 2, y)
-  doc.text('₹' + invoice.cg.toFixed(2), boxX + boxW, y, { align: 'right' })
+  doc.text(`CGST @ ${settings.cgst || 9}%`, boxX + 2, y)
+  doc.text('Rs.' + (Number(invoice.gst_amount || 0) / 2).toFixed(2), boxX + boxW -4 , y, { align: 'right' })
   y += 5
 
-  doc.text(`SGST @ ${invoice.sr}%`, boxX + 2, y)
-  doc.text('₹' + invoice.sg.toFixed(2), boxX + boxW, y, { align: 'right' })
+  doc.text(`SGST @ ${settings.sgst || 9}%`, boxX + 2, y)
+  doc.text('Rs.' + (Number(invoice.gst_amount || 0) / 2).toFixed(2), boxX + boxW-4 , y, { align: 'right' })
   y += 2
 
   doc.setDrawColor(24, 95, 165)
   doc.setLineWidth(0.5)
-  doc.line(boxX, y, boxX + boxW, y)
+  doc.line(boxX, y, boxX + boxW - 4, y)
   y += 5
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.setTextColor(24, 95, 165)
   doc.text('Total invoice value', boxX + 2, y)
-  doc.text('₹' + invoice.total.toFixed(2), boxX + boxW, y, { align: 'right' })
+  doc.text(`Rs.${Number(invoice.total || 0).toFixed(2)}`, boxX + boxW - 4, y, { align: 'right' })
   y += 8
 
   // Amount in words

@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { getSession } from '../lib/auth'
 import { getProducts } from '../lib/products'
 import { getCustomers } from '../lib/customers'
-import { getInvoices } from '../lib/invoices'
+import { getInvoices, getInvoiceItems } from '../lib/invoices'
+import { getBusiness } from '../lib/businesses'
 const AppContext = createContext(null)
 
 const STORAGE_KEY = 'jkhd_data'
@@ -121,12 +122,41 @@ export function AppProvider({ children }) {
       await loadProductsFromSupabase(session.user)
       await loadInvoicesFromSupabase(session.user)
       await loadCustomersFromSupabase(session.user)
+      await loadBusinessFromSupabase(session.user)
     }
 
     restoreSession()
     
   }, [])
+  async function loadBusinessFromSupabase(user) {
+    if (!user?.id || !user?.email) return
 
+    const { data, error } = await getBusiness(user.id)
+
+    if (error || !data) return
+
+    setAllUsers(prev => ({
+      ...prev,
+      [user.email.toLowerCase()]: {
+        ...prev[user.email.toLowerCase()],
+        settings: {
+          ...prev[user.email.toLowerCase()].settings,
+
+          bname: data.business_name || '',
+          gstin: data.gstin || '',
+          phone: data.phone || '',
+          addr1: data.address || '',
+          pos: data.state || '',
+
+          email: data.email || '',
+          cgst: data.cgst || '9',
+          sgst: data.sgst || '9',
+          prefix: data.prefix || 'INV',
+          sig: data.sig || ''
+        }
+      }
+    }))
+  }
   async function loadProductsFromSupabase(user) {
     if (!user?.id || !user?.email) return
 
@@ -149,18 +179,49 @@ export function AppProvider({ children }) {
   async function loadInvoicesFromSupabase(user) {
     if (!user?.id || !user?.email) return
 
-    const { data, error } = await getInvoices(user.id)
+    const { data: invoices, error } = await getInvoices(user.id)
 
     if (error) {
       console.error(error)
       return
     }
 
+    const { data: customers } = await getCustomers(user.id)
+
+    const invoicesWithItems = await Promise.all(
+      (invoices || []).map(async invoice => {
+        const { data: items } = await getInvoiceItems(invoice.id)
+
+        const customer = customers?.find(
+          c => String(c.id) === String(invoice.customer_id)
+        )
+
+        return {
+          ...invoice,
+
+          custName: customer?.name || 'Unknown Customer',
+          custAddr: customer?.address || '',
+          custGstin: customer?.gstin || '',
+
+          date: invoice.created_at
+            ? new Date(invoice.created_at).toLocaleDateString('en-IN')
+            : '',
+
+          items: (items || []).map(item => ({
+            name: item.product_name,
+            qty: item.quantity,
+            price: Number(item.price || 0),
+            subtotal: Number(item.amount || 0)
+          }))
+        }
+      })
+    )
+
     setAllUsers(prev => ({
       ...prev,
       [user.email.toLowerCase()]: {
         ...prev[user.email.toLowerCase()],
-        invoices: data || []
+        invoices: invoicesWithItems
       }
     }))
   }
@@ -178,7 +239,6 @@ export function AppProvider({ children }) {
       ...prev,
       [user.email.toLowerCase()]: {
         ...prev[user.email.toLowerCase()],
-        id: user.id,
         customers: data || []
       }
     }))

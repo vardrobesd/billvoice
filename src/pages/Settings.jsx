@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { useApp } from '../context/AppContext'
+import { saveBusiness } from '../lib/businesses'
+
 
 export default function Settings() {
   const { currentUser, updateUserData, showToast } = useApp()
@@ -10,12 +12,41 @@ export default function Settings() {
     setForm({ ...form, [key]: value })
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault()
+
+    const settingsData = {
+      ...form,
+      cgst: form.cgst || '9',
+      sgst: form.sgst || '9',
+      prefix: form.prefix || 'INV'
+    }
+
     updateUserData(user => ({
       ...user,
-      settings: { ...form, cgst: form.cgst || '9', sgst: form.sgst || '9', prefix: form.prefix || 'INV' }
+      settings: settingsData
     }))
+    console.log(settingsData)
+    const { error } = await saveBusiness({
+      user_id: currentUser.id,
+      business_name: settingsData.bname,
+      gstin: settingsData.gstin,
+      phone: settingsData.phone,
+      address: `${settingsData.addr1 || ''} ${settingsData.addr2 || ''}`.trim(),
+      state: settingsData.pos,
+      email: settingsData.email,
+      cgst: settingsData.cgst,
+      sgst: settingsData.sgst,
+      prefix: settingsData.prefix,
+      sig: settingsData.sig
+    })
+
+    if (error) {
+      console.error(error)
+      showToast('Database save failed')
+      return
+    }
+
     showToast('Settings saved!')
   }
 
