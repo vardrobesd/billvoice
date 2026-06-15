@@ -102,9 +102,7 @@ export default function AuthPage() {
             <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center' }}>
               Sign in
             </button>
-            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', textAlign: 'center', marginTop: 12 }}>
-              Demo: demo@jkhd.com / demo123
-            </div>
+            
           </form>
         ) : (
           <form onSubmit={handleRegister}>
